@@ -1317,11 +1317,11 @@
         </div>
         <div class="field">
           <label for="rguests">Number of Guests Shaadi</label>
-          <input id="rguests" type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" placeholder="e.g. 2" required>
+          <input id="rguests" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" placeholder="e.g. 2">
         </div>
         <div class="field">
           <label for="rsangeetguests">Number of Guests Haldi &amp; Sangeet</label>
-          <input id="rsangeetguests" type="text" inputmode="numeric" pattern="[1-9]" maxlength="1" placeholder="e.g. 2" required>
+          <input id="rsangeetguests" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" placeholder="e.g. 2">
         </div>
         <button type="submit" id="sendRsvp">SEND RSVP ♡</button>
         <div class="rsvp-confirm" id="rsvpConfirm"></div>
@@ -1538,7 +1538,6 @@ function restrictGuestInput(input){
   input?.addEventListener('input', ()=>{
     let v = String(input.value || '').replace(/\D/g, '');
     if(v.length > 1) v = v.slice(-1);
-    if(v === '0') v = '';
     input.value = v;
   });
 }
@@ -1556,19 +1555,19 @@ document.getElementById('rsvpForm').addEventListener('submit', async (e)=>{
   const guestCount = document.getElementById('rguests').value.trim();
   const sangeetGuestCount = document.getElementById('rsangeetguests').value.trim();
   if(!name || !email) return;
-  if(!/^[1-9]$/.test(guestCount)){
+  if(guestCount !== '' && !/^[0-9]$/.test(guestCount)){
     const confirm = document.getElementById('rsvpConfirm');
     confirm.style.display = 'block';
     confirm.style.color = '#8B3E4B';
-    confirm.textContent = 'Please enter how many guests will attend (1–9).';
+    confirm.textContent = 'Please enter a valid guest count (0–9).';
     document.getElementById('rguests').focus();
     return;
   }
-  if(!/^[1-9]$/.test(sangeetGuestCount)){
+  if(sangeetGuestCount !== '' && !/^[0-9]$/.test(sangeetGuestCount)){
     const confirm = document.getElementById('rsvpConfirm');
     confirm.style.display = 'block';
     confirm.style.color = '#8B3E4B';
-    confirm.textContent = 'Please enter how many guests will attend Haldi & Sangeet (1–9).';
+    confirm.textContent = 'Please enter a valid Haldi & Sangeet guest count (0–9).';
     document.getElementById('rsangeetguests').focus();
     return;
   }
