@@ -405,6 +405,16 @@
     text-shadow:0 1px 8px rgba(0,0,0,.5);
     opacity:.9;
   }
+  /* scroll-down image placed below the scratch card */
+  .scroll-down-image{ display:block; margin:12px auto 0; width:44px; height:auto; opacity:0; transform:translateY(6px); transition:opacity .9s var(--ease-premium), transform .9s var(--ease-premium); pointer-events:none; position:relative; z-index:60; }
+  .reveal-page .scroll-down-image{ opacity:0; }
+  /* ensure it's visible when gate opens and reveal-page appears */
+  .gate-scene.open .reveal-page .scroll-down-image,
+  body.doors-open .reveal-page .scroll-down-image{ opacity:1; transform:translateY(0); transition-delay:1.2s; }
+  /* make it more prominent and fixed near bottom so it's easy to spot */
+  body.doors-open .scroll-down-image.fixed-hint{ position:fixed; left:50%; bottom:20px; transform:translateX(-50%) translateY(0); width:64px; z-index:140; opacity:1; }
+  @keyframes scrollBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);} }
+  .scroll-down-image.bounce{ animation:scrollBounce 1.6s ease-in-out infinite; }
   .std-btn{
     display:inline-block; margin-top:22px;
     padding:14px 28px; min-width:220px;
@@ -1273,7 +1283,7 @@
           </div>
       </div>
     </div>
-   
+    <br><br><br>
   </section>
 
   <!-- 6. VENUE -->
@@ -1453,6 +1463,67 @@ requestAnimationFrame(tickParallax);
     setTimeout(()=>{
       if(typeof window.initScratchCard === 'function') window.initScratchCard(true);
     }, 2000);
+
+    // Gentle automatic scroll cue: nudge the page down a bit after 3s so visitors
+    // understand there's more to explore. Respect prefers-reduced-motion and
+    // cancel if the user interacts before the cue. Create a body-level fixed
+    // hint (appended to document.body) to avoid transformed ancestor issues.
+    try{
+      if(!prefersReducedMotion){
+        // Create a fixed hint appended to body (if not already present)
+        let fixedHint = document.getElementById('scrollHintFixed');
+        if(!fixedHint){
+          fixedHint = document.createElement('img');
+          fixedHint.id = 'scrollHintFixed';
+          fixedHint.src = 'wedding%20images/scroll.png';
+          fixedHint.alt = 'Scroll down';
+          fixedHint.className = 'scroll-down-image bounce';
+          // Basic inline style so it is definitely fixed to the viewport and visible
+          fixedHint.style.position = 'fixed';
+          // place on the right side so it won't overlap the scratch card
+          fixedHint.style.left = 'auto';
+          fixedHint.style.right = '24px';
+          fixedHint.style.bottom = '24px';
+          // no horizontal translate when pinned to right
+          fixedHint.style.transform = 'none';
+          fixedHint.style.width = '64px';
+          fixedHint.style.zIndex = '2147483646';
+          fixedHint.style.opacity = '0';
+          fixedHint.style.pointerEvents = 'none';
+          // Use CSS custom property if available for timing, otherwise fallback
+          fixedHint.style.transition = 'opacity .9s ease, transform .9s ease';
+          document.body.appendChild(fixedHint);
+          // fade in shortly after append
+          setTimeout(()=>{ try{ fixedHint.style.opacity = '1'; }catch(_){}} , 200);
+          // keep the fixed hint visible until the user scrolls or navigates away
+          // (do not auto-remove).
+        }
+
+        // Auto-scroll nudge
+        let autoScrollTimer = setTimeout(()=>{
+          if(!document.body.classList.contains('doors-open')) return;
+          if(window.scrollY > 20) return;
+          const amount = Math.min(180, Math.round(window.innerHeight * 0.12));
+          window.scrollTo({ top: amount, behavior: 'smooth' });
+          // gently return to top after a short pause unless user scrolls further
+          setTimeout(()=>{
+            if(window.scrollY > amount + 20) return; // user scrolled further
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, 2200);
+        }, 3000);
+
+        const cancelAuto = ()=>{
+          try{ clearTimeout(autoScrollTimer); }catch(_){ }
+          // Do not remove the fixed hint; only cancel the auto-scroll behavior.
+          window.removeEventListener('wheel', cancelAuto, {passive:true});
+          window.removeEventListener('touchstart', cancelAuto, {passive:true});
+          window.removeEventListener('keydown', cancelAuto, {passive:false});
+        };
+        window.addEventListener('wheel', cancelAuto, {passive:true});
+        window.addEventListener('touchstart', cancelAuto, {passive:true});
+        window.addEventListener('keydown', cancelAuto, {passive:false});
+      }
+    }catch(_){ /* defensive: don't break if something unexpected occurs */ }
   });
 })();
 
